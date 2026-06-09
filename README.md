@@ -1,14 +1,21 @@
 # skills
 
-A curated collection of Claude Code / agent **skills**, assembled from three
-upstream repositories. Each source is kept in its own folder with its original
-structure and license preserved.
+A curated collection of Claude Code **skills**, assembled from three upstream
+repositories and packaged as **three installable plugins** under one marketplace.
+Each source is kept in its own folder with its original license preserved.
 
 ```
 skills/
-├── superpowers/   # 14 skills  — foundational agent workflow skills
-├── claude-mem/    # 16 skills  — memory plugin skills
-└── ecc/           # 221 skills — broad engineering / agent skill library (curated)
+├── .claude-plugin/marketplace.json   # registers the 3 plugins
+├── superpowers/    # plugin —  14 skills  (foundational agent workflow skills)
+│   ├── .claude-plugin/plugin.json
+│   └── skills/<14 skill dirs>
+├── claude-mem/     # plugin —  16 skills  (memory project skills)
+│   ├── .claude-plugin/plugin.json
+│   └── skills/<16 skill dirs>
+└── ecc/            # plugin — 221 skills  (engineering / agent library, curated)
+    ├── .claude-plugin/plugin.json
+    └── skills/<221 skill dirs>
 ```
 
 **251 skills total.**
@@ -37,14 +44,29 @@ dropped, and ~40 hyper-specific industry verticals were removed. See
 `superpowers/` and `claude-mem/` are included in full (only byte-identical
 duplicates were dropped).
 
-## Using a skill
+## Installing
 
-These are standard Claude Code skills. To use one, point your skills directory at
-it — e.g. copy a skill folder into `~/.claude/skills/`:
+This repo is a Claude Code **plugin marketplace** with three plugins. Add the
+marketplace once, then install whichever groups you want:
 
-```bash
-cp -R ecc/python-testing ~/.claude/skills/
+```text
+/plugin marketplace add deeppatel6598/skills
+/plugin install superpowers@deeppatel6598-skills
+/plugin install ecc@deeppatel6598-skills
+/plugin install claude-mem@deeppatel6598-skills
 ```
 
-or reference this repo from a plugin's `skills` source. The skill activates based
-on its `description` frontmatter when its trigger conditions are met.
+Install only the groups you need — `ecc` alone is 221 skills, and every
+installed skill's `name`+`description` consumes context, so installing all three
+at once is heavy. A skill activates automatically based on its `description` when
+its trigger conditions are met.
+
+### Manual alternative (single skill)
+
+You can also copy one skill folder straight into your skills directory:
+
+```bash
+git clone https://github.com/deeppatel6598/skills
+cp -R skills/ecc/skills/python-testing ~/.claude/skills/      # all projects
+# or into a project:  cp -R skills/ecc/skills/python-testing <project>/.claude/skills/
+```

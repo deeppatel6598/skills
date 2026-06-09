@@ -1,0 +1,20 @@
+{
+  "name": "superpowers",
+  "version": "5.1.0",
+  "description": "Foundational agent workflow skills for Claude Code: brainstorming, TDD, systematic debugging, writing/executing plans, code review, git worktrees, and verification.",
+  "author": {
+    "name": "Jesse Vincent",
+    "email": "jesse@fsck.com"
+  },
+  "homepage": "https://github.com/obra/superpowers",
+  "repository": "https://github.com/obra/superpowers",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "tdd",
+    "debugging",
+    "collaboration",
+    "best-practices",
+    "workflows"
+  ]
+}

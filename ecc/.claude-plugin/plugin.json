@@ -1,0 +1,20 @@
+{
+  "name": "ecc",
+  "version": "2.0.0",
+  "description": "Curated engineering and agent skill library: languages, frameworks, testing, frontend, devops, agent harnesses, research, and content (221 skills).",
+  "author": {
+    "name": "ECC project"
+  },
+  "license": "See LICENSE",
+  "keywords": [
+    "skills",
+    "engineering",
+    "agents",
+    "testing",
+    "frontend",
+    "backend",
+    "devops",
+    "frameworks",
+    "research"
+  ]
+}
