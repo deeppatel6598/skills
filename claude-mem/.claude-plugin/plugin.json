@@ -1,0 +1,19 @@
+{
+  "name": "claude-mem",
+  "version": "13.4.2",
+  "description": "Skills from the claude-mem project: memory search, timeline/standup/digest reports, codebase learning, and planning. This is the skills subset only (not the full memory MCP server).",
+  "author": {
+    "name": "Alex Newman"
+  },
+  "homepage": "https://github.com/thedotmack/claude-mem",
+  "repository": "https://github.com/thedotmack/claude-mem",
+  "license": "Apache-2.0",
+  "keywords": [
+    "skills",
+    "claude-code",
+    "memory",
+    "knowledge",
+    "planning",
+    "reports"
+  ]
+}

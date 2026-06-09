@@ -1,0 +1,27 @@
+{
+  "name": "deeppatel6598-skills",
+  "description": "A curated collection of Claude Code skills, packaged as three installable plugins (superpowers, ecc, claude-mem).",
+  "owner": {
+    "name": "deeppatel6598"
+  },
+  "plugins": [
+    {
+      "name": "superpowers",
+      "source": "./superpowers",
+      "version": "5.1.0",
+      "description": "Foundational agent workflow skills: brainstorming, TDD, systematic debugging, writing/executing plans, code review, git worktrees, verification (14 skills). Originally by Jesse Vincent (obra/superpowers, MIT)."
+    },
+    {
+      "name": "ecc",
+      "source": "./ecc",
+      "version": "2.0.0",
+      "description": "Curated engineering & agent skill library: languages, frameworks, testing, frontend, devops, agent harnesses, research, and content (221 skills). Curated subset of the ECC project."
+    },
+    {
+      "name": "claude-mem",
+      "source": "./claude-mem",
+      "version": "13.4.2",
+      "description": "Skills from the claude-mem project: memory search, timeline/standup/digest reports, codebase learning, planning (16 skills). Originally by Alex Newman (thedotmack/claude-mem, Apache-2.0)."
+    }
+  ]
+}
