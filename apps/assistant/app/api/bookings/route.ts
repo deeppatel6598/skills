@@ -5,6 +5,7 @@ import { bookAppointment } from "@/lib/domain/booking";
 import { formatDateTime } from "@/lib/domain/time";
 import { ConflictError, NotFoundError } from "@/lib/types";
 import { CLIENT_COOKIE, CLIENT_COOKIE_MAX_AGE, signClientId } from "@/lib/client-session";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,6 +23,9 @@ const Body = z.object({
 
 /** POST /api/bookings — structured booking (used by the widget's booking form). */
 export async function POST(req: NextRequest) {
+  const limited = rateLimit(req, { name: "bookings", limit: 15, windowMs: 60_000 });
+  if (limited) return limited;
+
   let json: unknown;
   try {
     json = await req.json();

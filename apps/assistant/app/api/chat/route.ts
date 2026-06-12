@@ -4,6 +4,7 @@ import { loadContext } from "@/lib/context";
 import { runConcierge } from "@/lib/ai/concierge";
 import { loadClientContext } from "@/lib/domain/client-context";
 import { CLIENT_COOKIE, verifyClientId } from "@/lib/client-session";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +17,9 @@ const Body = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const limited = rateLimit(req, { name: "chat", limit: 30, windowMs: 60_000 });
+  if (limited) return limited;
+
   let json: unknown;
   try {
     json = await req.json();

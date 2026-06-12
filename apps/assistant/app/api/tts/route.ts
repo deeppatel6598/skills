@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { buildElevenLabsRequest, elevenLabsConfigured } from "@/lib/voice/elevenlabs-server";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,6 +13,9 @@ const Body = z.object({ text: z.string().min(1).max(2000) });
  * Returns 501 when no key is configured so the browser falls back to Web Speech.
  */
 export async function POST(req: NextRequest) {
+  const limited = rateLimit(req, { name: "tts", limit: 40, windowMs: 60_000 });
+  if (limited) return limited;
+
   if (!elevenLabsConfigured()) {
     return NextResponse.json({ error: { code: "tts_unavailable", message: "ElevenLabs not configured" } }, { status: 501 });
   }

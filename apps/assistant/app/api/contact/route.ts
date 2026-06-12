@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,6 +13,9 @@ const Body = z.object({
 
 /** POST /api/contact — accept a contact message. Production: forward via Resend. */
 export async function POST(req: NextRequest) {
+  const limited = rateLimit(req, { name: "contact", limit: 5, windowMs: 60_000 });
+  if (limited) return limited;
+
   let json: unknown;
   try {
     json = await req.json();
