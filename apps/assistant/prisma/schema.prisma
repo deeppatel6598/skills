@@ -1,0 +1,181 @@
+// Production database schema (PostgreSQL). The app also runs without a DB using
+// the in-memory repository (lib/repo/memory.ts); set DATABASE_URL to use this.
+// Apply the overlap-exclusion constraint from prisma/constraints.sql after migrate.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Business {
+  id            String           @id @default(cuid())
+  slug          String           @unique
+  name          String
+  vertical      String           @default("generic") // veterinary | salon | dental | generic
+  config        Json                                  // BrandConfig (hours, branding, voice persona, tone, policies)
+  services      Service[]
+  resources     Resource[]
+  clients       Client[]
+  knowledge     KnowledgeEntry[]
+  conversations Conversation[]
+  users         User[]
+  createdAt     DateTime         @default(now())
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  businessId  String
+  name        String
+  durationMin Int
+  priceCents  Int?
+  description String?
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+}
+
+model Resource {
+  id           String             @id @default(cuid())
+  businessId   String
+  name         String
+  role         String?
+  googleCalId  String?
+  business     Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  availability AvailabilityRule[]
+  blackouts    BlackoutDate[]
+  appointments Appointment[]
+
+  @@index([businessId])
+}
+
+model AvailabilityRule {
+  id         String   @id @default(cuid())
+  resourceId String
+  weekday    Int // 0 = Sunday .. 6 = Saturday
+  startMin   Int // minutes from midnight, clinic-local
+  endMin     Int
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@index([resourceId])
+}
+
+model BlackoutDate {
+  id         String   @id @default(cuid())
+  resourceId String
+  startsAt   DateTime
+  endsAt     DateTime
+  reason     String?
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@index([resourceId, startsAt])
+}
+
+model Client {
+  id           String        @id @default(cuid())
+  businessId   String
+  name         String
+  phone        String
+  email        String?
+  attributes   Json? // vertical-specific, e.g. vet: { pets: [{ name, species, breed, age }] }
+  business     Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  @@index([businessId])
+  @@index([businessId, phone])
+}
+
+model Appointment {
+  id            String     @id @default(cuid())
+  businessId    String
+  clientId      String
+  resourceId    String
+  serviceId     String
+  startsAt      DateTime
+  endsAt        DateTime
+  status        ApptStatus @default(CONFIRMED)
+  googleEventId String?
+  notes         String?
+  attributes    Json? // vet: { petName, reason }
+  createdAt     DateTime   @default(now())
+  client        Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  resource      Resource   @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, startsAt])
+  @@index([resourceId, startsAt])
+}
+
+enum ApptStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+model KnowledgeEntry {
+  id         String        @id @default(cuid())
+  businessId String
+  kind       KnowledgeKind @default(GENERAL)
+  title      String
+  body       String
+  metadata   Json? // map URL, lat/lng, phone, photos
+  business   Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, kind])
+  // Production: add a tsvector or pgvector(embedding) column + index via SQL migration.
+}
+
+enum KnowledgeKind {
+  FAQ
+  SERVICE
+  FACILITY
+  LOCATION
+  POLICY
+  TEAM
+  HOURS
+  PRICING
+  GENERAL
+}
+
+model Conversation {
+  id         String    @id @default(cuid())
+  businessId String
+  channel    String    @default("chat") // chat | voice
+  clientId   String?
+  messages   Message[]
+  createdAt  DateTime  @default(now())
+  business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, createdAt])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  role           String // user | assistant | tool
+  content        String
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+}
+
+model User {
+  id         String   @id @default(cuid())
+  businessId String
+  email      String   @unique
+  name       String?
+  role       Role     @default(STAFF)
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+}
+
+enum Role {
+  OWNER
+  STAFF
+}
