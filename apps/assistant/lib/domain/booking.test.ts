@@ -135,6 +135,21 @@ describe("returning-client memory", () => {
   });
 });
 
+describe("multilingual fallback", () => {
+  it("greets in Spanish when the client writes Spanish", async () => {
+    const { repo, business } = await setup();
+    const res = await runFallback(repo, business, [{ role: "user", content: "hola" }]);
+    expect(res.reply.toLowerCase()).toContain("hola");
+  });
+
+  it("offers slots with a French lead for a French booking request", async () => {
+    const { repo, business } = await setup();
+    const res = await runFallback(repo, business, [{ role: "user", content: "je voudrais réserver un wellness exam" }]);
+    expect(res.ui?.kind).toBe("slots");
+    expect(res.reply.toLowerCase()).toContain("créneaux");
+  });
+});
+
 describe("concierge fallback (no API key)", () => {
   it("answers a brand/location question from the knowledge base", async () => {
     const { repo, business } = await setup();

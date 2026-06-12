@@ -9,6 +9,7 @@ import {
   ttsSupported,
   type PersonaTTS,
 } from "@/lib/voice/webspeech";
+import { detectLanguage, t, toBCP47 } from "@/lib/lang";
 
 type ServiceCard = { name: string; price: string | null; durationMin: number; description: string | null };
 type Slot = { iso: string; label: string; with: string };
@@ -48,6 +49,7 @@ export default function ChatWidget() {
   useEffect(() => {
     voiceOnRef.current = voiceOn;
   }, [voiceOn]);
+  const langRef = useRef("en"); // current conversation language (from the user's input)
 
   const primary = biz?.branding.primary ?? "#2F6F6A";
   const accent = biz?.branding.accent ?? "#E8B04B";
@@ -87,7 +89,11 @@ export default function ChatWidget() {
   const say = useCallback(
     (text: string) => {
       if (!voiceOnRef.current || !biz) return;
-      void speak(text, biz.persona, { onStart: () => setSpeaking(true), onEnd: () => setSpeaking(false) });
+      void speak(text, biz.persona, {
+        lang: detectLanguage(text),
+        onStart: () => setSpeaking(true),
+        onEnd: () => setSpeaking(false),
+      });
     },
     [biz],
   );
@@ -96,6 +102,7 @@ export default function ChatWidget() {
     async (text: string) => {
       const trimmed = text.trim();
       if (!trimmed || sending) return;
+      langRef.current = detectLanguage(trimmed); // so the mic listens in their language too
       const next: Msg[] = [...messages, { role: "user", content: trimmed }];
       setMessages(next);
       setInput("");
@@ -137,6 +144,7 @@ export default function ChatWidget() {
       },
       onEnd: () => setListening(false),
       onError: () => setListening(false),
+      lang: toBCP47(langRef.current),
     });
     if (!rec) return;
     recognizerRef.current = rec;
@@ -154,7 +162,12 @@ export default function ChatWidget() {
       const json = await res.json();
       if (res.ok) {
         const d = json.data;
-        const confirm = `Wonderful — you're all set, ${form.clientName.split(" ")[0]}. I've booked ${form.petName ? form.petName + "'s " : ""}${d.service} for ${d.when} with ${d.with}. We'll send a confirmation email shortly.`;
+        const confirm = t(langRef.current, "booked", {
+          first: form.clientName.split(" ")[0],
+          service: d.service,
+          when: d.when,
+          withName: d.with,
+        });
         setMessages((m) => [
           ...m,
           { role: "assistant", content: confirm, ui: { kind: "booked", service: d.service, when: d.when, with: d.with, price: d.price } },

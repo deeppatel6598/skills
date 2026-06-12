@@ -87,8 +87,11 @@ Patterns came from the skills in this monorepo (`ecc/`, `superpowers/`):
 ## Roadmap (fast-follows)
 
 ElevenLabs streaming voice · Google Calendar sync · Resend confirmation/reminder
-emails · multilingual. See the plan for the full phased roadmap.
+emails. See the plan for the full phased roadmap.
 
 **Done:** booking domain · AI concierge (Claude + keyless fallback) · chat+voice
-widget · staff admin dashboard · **returning-client memory** (recognizes callers
-by a signed cookie or phone, greets by name, recalls their pet & next visit).
+widget · staff admin dashboard · returning-client memory · **multilingual** —
+auto-detects the client's language and replies in it (Claude does full content
+translation; the keyless fallback localizes its phrasing for en/es/fr/de/pt/hi),
+with voice STT/TTS following the language and the no-medical-advice safety line
+localized too.
