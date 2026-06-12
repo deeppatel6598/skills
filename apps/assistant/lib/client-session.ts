@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "crypto";
+import { getServerSecret } from "./secret";
 
 /**
  * Returning-client recognition. After a booking we set an httpOnly, signed
@@ -6,12 +7,11 @@ import { createHmac, timingSafeEqual } from "crypto";
  * by name. Signed so it can't be tampered to impersonate another client.
  * (Production ties this to real client accounts / verified phone.)
  */
-const SECRET = process.env.ADMIN_SECRET || "dev-insecure-secret-change-me";
 export const CLIENT_COOKIE = "pc_uid";
 export const CLIENT_COOKIE_MAX_AGE = 60 * 60 * 24 * 180; // 180 days
 
 function mac(id: string): string {
-  return createHmac("sha256", SECRET).update(id).digest("hex").slice(0, 16);
+  return createHmac("sha256", getServerSecret()).update(id).digest("hex").slice(0, 16);
 }
 
 export function signClientId(id: string): string {

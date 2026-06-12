@@ -1,20 +1,19 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import type { NextRequest } from "next/server";
+import { getAdminPassword, getServerSecret } from "./secret";
 
 /**
  * Minimal staff auth for the MVP admin: a shared password gate that sets an
  * httpOnly, SameSite=Strict session cookie (security-review skill). Production
  * swaps this for Auth.js (email magic-link) + per-user roles — the route guard
- * stays the same.
+ * stays the same. Secrets fail closed in production (see ./secret).
  */
-const SECRET = process.env.ADMIN_SECRET || "dev-insecure-secret-change-me";
-export const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "letmein";
 export const ADMIN_COOKIE = "admin_session";
 export const ADMIN_MAX_AGE = 60 * 60 * 8; // 8 hours
 
 /** Opaque, non-guessable session value derived from the server secret. */
 export function sessionToken(): string {
-  return createHmac("sha256", SECRET).update("admin-session-v1").digest("hex");
+  return createHmac("sha256", getServerSecret()).update("admin-session-v1").digest("hex");
 }
 
 function safeEqual(a: string, b: string): boolean {
@@ -24,7 +23,9 @@ function safeEqual(a: string, b: string): boolean {
 }
 
 export function verifyPassword(input: string): boolean {
-  return safeEqual(input, ADMIN_PASSWORD);
+  const password = getAdminPassword();
+  if (!password) return false; // admin login disabled until ADMIN_PASSWORD is set (prod)
+  return safeEqual(input, password);
 }
 
 export function isAuthed(req: NextRequest): boolean {
