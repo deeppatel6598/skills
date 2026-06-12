@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 import { MemoryRepo } from "@/lib/repo/memory";
 import { ConflictError, type Business } from "@/lib/types";
 import { getAvailableSlots } from "@/lib/domain/availability";
-import { bookAppointment, rescheduleUpcomingByPhone, cancelUpcomingByPhone } from "@/lib/domain/booking";
+import {
+  bookAppointment,
+  rescheduleUpcomingByPhone,
+  rescheduleAppointment,
+  cancelUpcomingByPhone,
+} from "@/lib/domain/booking";
 import { slotEnd } from "@/lib/domain/time";
 import { runFallback } from "@/lib/ai/fallback";
 
@@ -82,6 +87,16 @@ describe("booking", () => {
     // Old slot is now free again for a new client.
     const reuse = await bookAppointment(repo, business, { clientName: "New", phone: "555-444-5555", serviceName: "Wellness Exam", startISO: slots[0].iso });
     expect(reuse.appointment.status).toBe("CONFIRMED");
+  });
+
+  it("admin reschedule moves a specific appointment conflict-free", async () => {
+    const { repo, business, slots } = await setup();
+    const r = await bookAppointment(repo, business, { clientName: "Sara", phone: "555-777-8888", serviceName: "Wellness Exam", startISO: slots[0].iso });
+    const moved = await rescheduleAppointment(repo, business, r.appointment, slots[4].iso);
+    expect(moved.startsAt).toBe(slots[4].iso);
+    const active = await repo.listAppointments(business.id);
+    expect(active.find((a) => a.id === r.appointment.id)).toBeUndefined(); // old slot cancelled
+    expect(active.some((a) => a.id === moved.id)).toBe(true);
   });
 
   it("cancels the upcoming appointment", async () => {

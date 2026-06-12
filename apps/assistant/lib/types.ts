@@ -157,6 +157,12 @@ export interface Repo {
     fromISO: string,
     toISO: string,
   ): Promise<Appointment[]>;
+  /** All appointments for a tenant (admin views). */
+  listAppointments(
+    businessId: string,
+    opts?: { fromISO?: string; includeCancelled?: boolean },
+  ): Promise<Appointment[]>;
+  listClients(businessId: string): Promise<Client[]>;
   /** Throws ConflictError if the slot overlaps an existing active appointment. */
   createAppointment(input: {
     businessId: string;

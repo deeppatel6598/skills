@@ -166,6 +166,26 @@ export class PrismaRepo implements Repo {
     }
   }
 
+  async listAppointments(
+    businessId: string,
+    opts?: { fromISO?: string; includeCancelled?: boolean },
+  ) {
+    const rows = await this.db.appointment.findMany({
+      where: {
+        businessId,
+        ...(opts?.includeCancelled ? {} : { status: { not: "CANCELLED" } }),
+        ...(opts?.fromISO ? { startsAt: { gte: new Date(opts.fromISO) } } : {}),
+      },
+      orderBy: { startsAt: "asc" },
+    });
+    return rows.map(this.toAppt);
+  }
+
+  async listClients(businessId: string): Promise<Client[]> {
+    const rows = await this.db.client.findMany({ where: { businessId } });
+    return rows.map((c) => c as unknown as Client);
+  }
+
   async getAppointmentsByPhone(businessId: string, phone: string) {
     const client = await this.db.client.findFirst({ where: { businessId, phone } });
     if (!client) return [];

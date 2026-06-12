@@ -77,6 +77,34 @@ export async function bookAppointment(
   return { appointment, service, resource, client };
 }
 
+/** Move a specific appointment to a new time, conflict-free (staff/admin use). */
+export async function rescheduleAppointment(
+  repo: Repo,
+  business: Business,
+  appt: Appointment,
+  newStartISO: string,
+): Promise<Appointment> {
+  const services = await repo.listServices(business.id);
+  const service = services.find((s) => s.id === appt.serviceId);
+  if (!service) throw new NotFoundError("Service not found for this appointment.");
+
+  const free = await findFreeResource(repo, business, service, newStartISO);
+  if (!free) throw new ConflictError("That new time isn't available.");
+
+  const newEnd = addMinutes(new Date(newStartISO), service.durationMin).toISOString();
+  await repo.updateAppointment(appt.id, { status: "CANCELLED" });
+  return repo.createAppointment({
+    businessId: business.id,
+    clientId: appt.clientId,
+    resourceId: free.id,
+    serviceId: service.id,
+    startsAt: newStartISO,
+    endsAt: newEnd,
+    notes: appt.notes ?? undefined,
+    attributes: appt.attributes ?? undefined,
+  });
+}
+
 export async function cancelUpcomingByPhone(
   repo: Repo,
   business: Business,

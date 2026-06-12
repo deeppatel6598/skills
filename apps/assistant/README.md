@@ -28,6 +28,9 @@ Add capabilities by setting env vars (copy `.env.example` → `.env.local`):
 - `DATABASE_URL` → Postgres persistence (`npm run db:push && npm run seed`).
 - `ELEVENLABS_API_KEY` → the warm, human production voice (see the plan).
 
+**Staff dashboard:** visit `/admin` (demo password `letmein`, set via
+`ADMIN_PASSWORD`) to view, reschedule, and cancel bookings.
+
 ## Verify
 
 ```bash
@@ -45,12 +48,14 @@ concierge (brand answers, slot offers, the no-medical-advice guardrail).
 ```
 app/
   page.tsx                 Landing + embedded widget
+  admin/page.tsx           Staff dashboard (sign in, view/reschedule/cancel)
   components/ChatWidget.tsx Chat + voice UI (mic STT, persona TTS, slot chips, booking form)
   api/
     chat/        POST  one concierge turn (Claude tool-loop or fallback)
     availability GET   real open slots for a service
     bookings/    POST  structured, conflict-free booking
     business/    GET   tenant meta (persona, branding, services)
+    admin/       login/logout + GET bookings + PATCH/DELETE :id (cookie-guarded)
 lib/
   types.ts                 Domain types + the Repo port (hexagonal)
   domain/                  availability, booking, time — pure & unit-tested

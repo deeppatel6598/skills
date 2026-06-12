@@ -253,6 +253,24 @@ export class MemoryRepo implements Repo {
     return appt;
   }
 
+  async listAppointments(
+    businessId: string,
+    opts?: { fromISO?: string; includeCancelled?: boolean },
+  ) {
+    return this.appointments
+      .filter(
+        (a) =>
+          a.businessId === businessId &&
+          (opts?.includeCancelled || a.status !== "CANCELLED") &&
+          (!opts?.fromISO || a.startsAt >= opts.fromISO),
+      )
+      .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  }
+
+  async listClients(businessId: string) {
+    return this.clients.filter((c) => c.businessId === businessId);
+  }
+
   async getAppointmentsByPhone(businessId: string, phone: string) {
     const client = await this.findClientByPhone(businessId, phone);
     if (!client) return [];
