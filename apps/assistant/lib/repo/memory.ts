@@ -176,6 +176,10 @@ export class MemoryRepo implements Repo {
     );
   }
 
+  async getClientById(businessId: string, id: string) {
+    return this.clients.find((c) => c.businessId === businessId && c.id === id) ?? null;
+  }
+
   async upsertClient(input: {
     businessId: string;
     name: string;

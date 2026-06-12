@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { Business, ChatMessage, Repo } from "@/lib/types";
+import type { ClientContext } from "@/lib/domain/client-context";
 import { buildSystemPrompt } from "./prompt";
 import { dispatchTool, TOOLS, type ToolResult } from "./tools";
 import { runFallback } from "./fallback";
@@ -40,13 +41,14 @@ export async function runConcierge(
   repo: Repo,
   business: Business,
   messages: ChatMessage[],
+  clientContext?: ClientContext | null,
 ): Promise<ConciergeResult> {
   if (!process.env.ANTHROPIC_API_KEY) {
-    return runFallback(repo, business, messages);
+    return runFallback(repo, business, messages, clientContext);
   }
 
   const services = await repo.listServices(business.id);
-  const system = buildSystemPrompt(business, services);
+  const system = buildSystemPrompt(business, services, clientContext);
   const client = new Anthropic();
 
   // History must start with a user turn for the Messages API.

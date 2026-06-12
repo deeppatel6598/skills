@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { loadContext } from "@/lib/context";
 import { runConcierge } from "@/lib/ai/concierge";
+import { loadClientContext } from "@/lib/domain/client-context";
+import { CLIENT_COOKIE, verifyClientId } from "@/lib/client-session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,7 +33,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const { repo, business } = await loadContext();
-    const result = await runConcierge(repo, business, parsed.data.messages);
+    const clientId = verifyClientId(req.cookies.get(CLIENT_COOKIE)?.value);
+    const clientContext = clientId ? await loadClientContext(repo, business, { clientId }) : null;
+    const result = await runConcierge(repo, business, parsed.data.messages, clientContext);
     return NextResponse.json({
       data: {
         reply: result.reply,

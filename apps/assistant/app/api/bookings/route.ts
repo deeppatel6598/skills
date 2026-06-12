@@ -4,6 +4,7 @@ import { loadContext } from "@/lib/context";
 import { bookAppointment } from "@/lib/domain/booking";
 import { formatDateTime } from "@/lib/domain/time";
 import { ConflictError, NotFoundError } from "@/lib/types";
+import { CLIENT_COOKIE, CLIENT_COOKIE_MAX_AGE, signClientId } from "@/lib/client-session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
       startISO: b.startISO,
       reason: b.reason,
     });
-    return NextResponse.json(
+    const res = NextResponse.json(
       {
         data: {
           id: result.appointment.id,
@@ -60,6 +61,15 @@ export async function POST(req: NextRequest) {
       },
       { status: 201, headers: { Location: `/api/bookings/${result.appointment.id}` } },
     );
+    // Remember this client so we can greet them by name next time (signed, httpOnly).
+    res.cookies.set(CLIENT_COOKIE, signClientId(result.client.id), {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: CLIENT_COOKIE_MAX_AGE,
+    });
+    return res;
   } catch (err) {
     if (err instanceof ConflictError)
       return NextResponse.json({ error: { code: "slot_taken", message: err.message } }, { status: 409 });

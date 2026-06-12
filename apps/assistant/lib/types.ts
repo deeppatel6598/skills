@@ -145,6 +145,7 @@ export interface Repo {
     kind?: KnowledgeKind,
   ): Promise<KnowledgeEntry[]>;
   findClientByPhone(businessId: string, phone: string): Promise<Client | null>;
+  getClientById(businessId: string, id: string): Promise<Client | null>;
   upsertClient(input: {
     businessId: string;
     name: string;

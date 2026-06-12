@@ -1,4 +1,6 @@
 import type { Business, ChatMessage, Repo } from "@/lib/types";
+import type { ClientContext } from "@/lib/domain/client-context";
+import { loadClientContext } from "@/lib/domain/client-context";
 import { dispatchTool } from "./tools";
 import type { ConciergeResult, ConciergeUI } from "./types";
 
@@ -12,11 +14,31 @@ export async function runFallback(
   repo: Repo,
   business: Business,
   messages: ChatMessage[],
+  clientContext?: ClientContext | null,
 ): Promise<ConciergeResult> {
   const c = business.config;
   const lastUser = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
   const text = lastUser.toLowerCase().trim();
   const services = await repo.listServices(business.id);
+
+  // Returning-client recognition: from the session cookie, or a phone they type.
+  let client = clientContext ?? null;
+  const phoneMatch = lastUser.match(/(\+?\d[\d\s().-]{6,}\d)/);
+  if (!client && phoneMatch) {
+    client = await loadClientContext(repo, business, { phone: phoneMatch[1] });
+  }
+  const firstName = client?.name?.split(" ")[0];
+  const petName = client?.pets?.[0]?.name;
+
+  // "When is my appointment?" — answer from their record if we know them.
+  if (/\b(my|our)\b.*\b(appointment|booking|visit|reservation)\b/.test(text) || /when('?s| is) my\b/.test(text)) {
+    if (client?.upcoming) {
+      return { reply: `You're booked for a ${client.upcoming.service} on ${client.upcoming.when}, ${firstName}. Shall I help with anything else?`, usedClaude: false };
+    }
+    if (!client) {
+      return { reply: "I can check that for you — what's the phone number on the booking?", usedClaude: false };
+    }
+  }
 
   const serviceCards = services.map((s) => ({
     name: s.name,
@@ -28,10 +50,10 @@ export async function runFallback(
 
   // Greeting / empty
   if (!text || (/^(hi|hello|hey|good (morning|afternoon|evening)|yo)\b/.test(text) && text.length < 28)) {
-    return {
-      reply: `Hi there — I'm ${c.assistantName} at ${business.name}. How can I help you and your pet today? I can answer questions or book a visit.`,
-      usedClaude: false,
-    };
+    const greeting = client
+      ? `Welcome back, ${firstName}! ${petName ? `How's ${petName}? ` : ""}What can I help you with today?`
+      : `Hi there — I'm ${c.assistantName} at ${business.name}. How can I help you and your pet today? I can answer questions or book a visit.`;
+    return { reply: greeting, usedClaude: false };
   }
 
   // Try to detect a named service anywhere in the message

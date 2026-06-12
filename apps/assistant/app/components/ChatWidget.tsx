@@ -40,6 +40,7 @@ export default function ChatWidget() {
   const [voiceOn, setVoiceOn] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [booking, setBooking] = useState<{ service: string; startISO: string; label: string } | null>(null);
+  const [returning, setReturning] = useState<{ name: string; phone: string } | null>(null);
 
   const recognizerRef = useRef<{ start: () => void; stop: () => void } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -56,12 +57,25 @@ export default function ChatWidget() {
       .then((r) => r.json())
       .then(({ data }: { data: BizMeta }) => {
         setBiz(data);
-        setMessages([
-          {
-            role: "assistant",
-            content: `Hi there — I'm ${data.assistantName} at ${data.name}. ${data.tagline ?? ""} How can I help you and your pet today?`,
-          },
-        ]);
+        const fresh = `Hi there — I'm ${data.assistantName} at ${data.name}. ${data.tagline ?? ""} How can I help you and your pet today?`;
+        // Returning-client recognition (signed cookie set on a prior booking).
+        fetch("/api/client/me", { cache: "no-store" })
+          .then((r) => r.json())
+          .then(({ data: me }) => {
+            if (me?.returning) {
+              const pet = me.pets?.[0]?.name as string | undefined;
+              setReturning({ name: me.name, phone: me.phone });
+              setMessages([
+                {
+                  role: "assistant",
+                  content: `Welcome back, ${me.firstName}! ${pet ? `How's ${pet}? ` : ""}${me.upcoming ? `You're booked for a ${me.upcoming.service} on ${me.upcoming.when}. ` : ""}What can I help you with today?`,
+                },
+              ]);
+            } else {
+              setMessages([{ role: "assistant", content: fresh }]);
+            }
+          })
+          .catch(() => setMessages([{ role: "assistant", content: fresh }]));
       })
       .catch(() => {});
   }, []);
@@ -259,6 +273,8 @@ export default function ChatWidget() {
           service={booking.service}
           startISO={booking.startISO}
           label={booking.label}
+          defaultName={returning?.name ?? ""}
+          defaultPhone={returning?.phone ?? ""}
           onCancel={() => setBooking(null)}
           onSubmit={submitBooking}
         />
@@ -352,6 +368,8 @@ function BookingForm({
   service,
   startISO,
   label,
+  defaultName,
+  defaultPhone,
   onCancel,
   onSubmit,
 }: {
@@ -359,11 +377,13 @@ function BookingForm({
   service: string;
   startISO: string;
   label: string;
+  defaultName: string;
+  defaultPhone: string;
   onCancel: () => void;
   onSubmit: (form: { clientName: string; phone: string; petName?: string; serviceName: string; startISO: string }) => Promise<void>;
 }) {
-  const [clientName, setClientName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [clientName, setClientName] = useState(defaultName);
+  const [phone, setPhone] = useState(defaultPhone);
   const [petName, setPetName] = useState("");
   const [busy, setBusy] = useState(false);
   const valid = clientName.trim().length > 1 && phone.replace(/\D/g, "").length >= 7;

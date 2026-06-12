@@ -81,6 +81,11 @@ export class PrismaRepo implements Repo {
     return c ? (c as unknown as Client) : null;
   }
 
+  async getClientById(businessId: string, id: string): Promise<Client | null> {
+    const c = await this.db.client.findFirst({ where: { businessId, id } });
+    return c ? (c as unknown as Client) : null;
+  }
+
   async upsertClient(input: {
     businessId: string;
     name: string;

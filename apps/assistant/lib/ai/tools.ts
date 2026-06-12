@@ -7,6 +7,7 @@ import {
   rescheduleUpcomingByPhone,
 } from "@/lib/domain/booking";
 import { formatDateTime, formatSlotLabel } from "@/lib/domain/time";
+import { loadClientContext } from "@/lib/domain/client-context";
 
 /**
  * Tool layer for the concierge. Follows the agent-harness-construction skill:
@@ -45,6 +46,16 @@ export const TOOLS = [
         },
       },
       required: ["query"],
+    },
+  },
+  {
+    name: "lookup_client",
+    description:
+      "Look up a returning client by phone number to personalize the conversation — returns their name, pets, and any upcoming appointment. Use when the client shares a phone or asks about 'my appointment'.",
+    input_schema: {
+      type: "object" as const,
+      properties: { phone: { type: "string" } },
+      required: ["phone"],
     },
   },
   {
@@ -145,6 +156,23 @@ export async function dispatchTool(
           status: "success",
           summary: entries[0].body,
           data: entries.map((e) => ({ title: e.title, body: e.body, kind: e.kind, metadata: e.metadata })),
+        };
+      }
+
+      case "lookup_client": {
+        const ctx = await loadClientContext(repo, business, { phone: String(input.phone ?? "") });
+        if (!ctx) {
+          return { status: "warning", summary: "No returning client found with that phone." };
+        }
+        return {
+          status: "success",
+          summary: `Returning client: ${ctx.name}.`,
+          data: {
+            name: ctx.name,
+            pets: ctx.pets,
+            upcoming: ctx.upcoming ?? null,
+          },
+          next_actions: ["Greet them warmly by name and ask after their pet."],
         };
       }
 

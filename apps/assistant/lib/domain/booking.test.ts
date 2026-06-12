@@ -10,6 +10,7 @@ import {
 } from "@/lib/domain/booking";
 import { slotEnd } from "@/lib/domain/time";
 import { runFallback } from "@/lib/ai/fallback";
+import { loadClientContext } from "@/lib/domain/client-context";
 
 async function setup() {
   const repo = new MemoryRepo();
@@ -104,6 +105,33 @@ describe("booking", () => {
     await bookAppointment(repo, business, { clientName: "Sara", phone: "555-666-7777", serviceName: "Wellness Exam", startISO: slots[0].iso });
     const cancelled = await cancelUpcomingByPhone(repo, business, "555-666-7777");
     expect(cancelled?.status).toBe("CANCELLED");
+  });
+});
+
+describe("returning-client memory", () => {
+  it("recognizes a returning client by phone with pet and upcoming visit", async () => {
+    const { repo, business, slots } = await setup();
+    await bookAppointment(repo, business, { clientName: "Sara Lopez", phone: "555-111-2222", pet: { name: "Bella", species: "dog" }, serviceName: "Wellness Exam", startISO: slots[0].iso });
+    const ctx = await loadClientContext(repo, business, { phone: "555-111-2222" });
+    expect(ctx?.name).toBe("Sara Lopez");
+    expect(ctx?.pets?.[0]?.name).toBe("Bella");
+    expect(ctx?.upcoming?.service).toBe("Wellness Exam");
+  });
+
+  it("greets a returning client by name and asks after their pet", async () => {
+    const { repo, business, slots } = await setup();
+    await bookAppointment(repo, business, { clientName: "Sara Lopez", phone: "555-111-2222", pet: { name: "Bella" }, serviceName: "Wellness Exam", startISO: slots[0].iso });
+    const ctx = await loadClientContext(repo, business, { phone: "555-111-2222" });
+    const res = await runFallback(repo, business, [{ role: "user", content: "hi" }], ctx);
+    expect(res.reply).toContain("Welcome back, Sara");
+    expect(res.reply).toContain("Bella");
+  });
+
+  it("answers 'when is my appointment' from a phone given in the message", async () => {
+    const { repo, business, slots } = await setup();
+    await bookAppointment(repo, business, { clientName: "Sara Lopez", phone: "555-111-2222", serviceName: "Wellness Exam", startISO: slots[0].iso });
+    const res = await runFallback(repo, business, [{ role: "user", content: "when is my appointment? my number is 555-111-2222" }]);
+    expect(res.reply.toLowerCase()).toContain("wellness exam");
   });
 });
 
