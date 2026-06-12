@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   createRecognizer,
-  speak,
-  stopSpeaking,
+  speakReply,
+  stopAllSpeech,
   speechSupported,
   ttsSupported,
   type PersonaTTS,
-} from "@/lib/voice/webspeech";
+  type VoiceProvider,
+} from "@/lib/voice";
 import { detectLanguage, t, toBCP47 } from "@/lib/lang";
 
 type ServiceCard = { name: string; price: string | null; durationMin: number; description: string | null };
@@ -27,6 +28,7 @@ interface BizMeta {
   tagline?: string;
   branding: { primary: string; accent: string; bubbleEmoji?: string };
   persona: PersonaTTS & { displayName: string };
+  voiceProvider: VoiceProvider;
   services: ServiceCard[];
   suggestions: string[];
   emergencyLine?: string;
@@ -89,8 +91,10 @@ export default function ChatWidget() {
   const say = useCallback(
     (text: string) => {
       if (!voiceOnRef.current || !biz) return;
-      void speak(text, biz.persona, {
+      void speakReply(text, {
+        persona: biz.persona,
         lang: detectLanguage(text),
+        provider: biz.voiceProvider,
         onStart: () => setSpeaking(true),
         onEnd: () => setSpeaking(false),
       });
@@ -133,7 +137,7 @@ export default function ChatWidget() {
       setListening(false);
       return;
     }
-    stopSpeaking(); // barge-in
+    stopAllSpeech(); // barge-in
     const rec = createRecognizer({
       onResult: (text, isFinal) => {
         setInput(text);
@@ -201,10 +205,10 @@ export default function ChatWidget() {
           <p className="truncate text-sm font-semibold">{biz.assistantName} · {biz.name}</p>
           <p className="truncate text-xs text-white/80">{speaking ? "speaking…" : listening ? "listening…" : "online · here to help"}</p>
         </div>
-        {ttsSupported() && (
+        {(ttsSupported() || biz.voiceProvider === "elevenlabs") && (
           <button
             onClick={() => {
-              if (voiceOn) stopSpeaking();
+              if (voiceOn) stopAllSpeech();
               setVoiceOn((v) => !v);
             }}
             aria-pressed={voiceOn}

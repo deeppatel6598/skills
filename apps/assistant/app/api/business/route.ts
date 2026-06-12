@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { loadContext } from "@/lib/context";
+import { elevenLabsConfigured } from "@/lib/voice/elevenlabs-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +18,7 @@ export async function GET() {
       tagline: c.tagline,
       branding: c.branding,
       persona: c.voice,
+      voiceProvider: elevenLabsConfigured() ? "elevenlabs" : "webspeech",
       hoursText: c.hoursText,
       emergencyLine: c.emergencyLine,
       services: services.map((s) => ({
