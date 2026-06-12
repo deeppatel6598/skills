@@ -108,45 +108,45 @@ export default function AdminPage() {
   };
 
   if (status === "loading") {
-    return <main className="grid min-h-screen place-items-center text-neutral-400">Loading…</main>;
+    return <main className="grid min-h-screen place-items-center bg-background text-muted-foreground">Loading…</main>;
   }
 
   if (status === "login") {
     return (
-      <main className="grid min-h-screen place-items-center bg-neutral-50 p-6">
-        <form onSubmit={login} className="w-full max-w-sm rounded-2xl border border-black/10 bg-white p-6 shadow-sm">
-          <h1 className="text-lg font-semibold text-neutral-800">Staff sign in</h1>
-          <p className="mt-1 text-sm text-neutral-500">Paws &amp; Care — booking dashboard</p>
+      <main className="grid min-h-screen place-items-center bg-background p-6">
+        <form onSubmit={login} className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <h1 className="text-lg font-semibold text-card-foreground">Staff sign in</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Paws &amp; Care — booking dashboard</p>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
             aria-label="Password"
-            className="mt-4 h-11 w-full rounded-xl border border-black/10 px-3 text-sm outline-none focus:border-[#2F6F6A]"
+            className="mt-4 h-11 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring/40"
           />
-          {loginError && <p className="mt-2 text-xs text-red-600">{loginError}</p>}
+          {loginError && <p className="mt-2 text-xs text-danger">{loginError}</p>}
           <button type="submit" className="mt-4 h-11 w-full rounded-xl text-sm font-medium text-white transition active:scale-[0.98]" style={{ background: PRIMARY }}>
             Sign in
           </button>
-          <p className="mt-3 text-center text-xs text-neutral-400">Demo password: <code>letmein</code> (set ADMIN_PASSWORD)</p>
+          <p className="mt-3 text-center text-xs text-muted-foreground">Demo password: <code className="rounded bg-muted px-1">letmein</code> (set ADMIN_PASSWORD)</p>
         </form>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-neutral-50">
-      <header className="flex items-center justify-between border-b border-black/10 bg-white px-6 py-4">
+    <main className="min-h-screen bg-background">
+      <header className="flex items-center justify-between border-b border-border bg-card px-6 py-4">
         <div>
-          <h1 className="text-lg font-semibold text-neutral-900">Bookings</h1>
-          <p className="text-xs text-neutral-500">Paws &amp; Care — staff dashboard</p>
+          <h1 className="text-lg font-semibold text-foreground">Bookings</h1>
+          <p className="text-xs text-muted-foreground">Paws &amp; Care — staff dashboard</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => void load()} className="rounded-lg border border-black/10 px-3 py-1.5 text-sm text-neutral-600 transition active:scale-95 hover:bg-neutral-100">
+          <button onClick={() => void load()} className="rounded-lg border border-border px-3 py-1.5 text-sm text-muted-foreground transition active:scale-95 hover:bg-muted hover:text-foreground">
             Refresh
           </button>
-          <button onClick={logout} className="rounded-lg border border-black/10 px-3 py-1.5 text-sm text-neutral-600 transition active:scale-95 hover:bg-neutral-100">
+          <button onClick={logout} className="rounded-lg border border-border px-3 py-1.5 text-sm text-muted-foreground transition active:scale-95 hover:bg-muted hover:text-foreground">
             Sign out
           </button>
         </div>
@@ -154,21 +154,21 @@ export default function AdminPage() {
 
       <div className="mx-auto max-w-3xl space-y-3 p-6">
         {bookings.length === 0 && (
-          <p className="rounded-2xl border border-dashed border-black/15 bg-white p-8 text-center text-sm text-neutral-400">
+          <p className="rounded-2xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
             No upcoming bookings yet. Make one from the chat widget on the home page.
           </p>
         )}
 
         {bookings.map((b) => (
-          <div key={b.id} className="rounded-2xl border border-black/10 bg-white p-4 shadow-sm">
+          <div key={b.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="font-medium text-neutral-900">
+                <p className="font-medium text-card-foreground">
                   {b.clientName}
-                  {b.petName ? <span className="text-neutral-500"> · {b.petName}</span> : null}
+                  {b.petName ? <span className="text-muted-foreground"> · {b.petName}</span> : null}
                 </p>
-                <p className="text-sm text-neutral-600">{b.service} — {b.when}</p>
-                <p className="text-xs text-neutral-400" style={{ fontVariantNumeric: "tabular-nums" }}>
+                <p className="text-sm text-muted-foreground">{b.service} — {b.when}</p>
+                <p className="text-xs text-muted-foreground" style={{ fontVariantNumeric: "tabular-nums" }}>
                   {b.phone} · with {b.with}
                 </p>
               </div>
@@ -176,15 +176,14 @@ export default function AdminPage() {
                 <button
                   onClick={() => void openReschedule(b)}
                   disabled={busyId === b.id}
-                  className="rounded-lg border px-3 py-1.5 text-xs font-medium transition active:scale-95 disabled:opacity-40"
-                  style={{ borderColor: PRIMARY, color: PRIMARY }}
+                  className="rounded-lg border border-primary px-3 py-1.5 text-xs font-medium text-primary transition active:scale-95 hover:bg-primary/10 disabled:opacity-40"
                 >
                   Reschedule
                 </button>
                 <button
                   onClick={() => void cancel(b.id)}
                   disabled={busyId === b.id}
-                  className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 transition active:scale-95 hover:bg-red-50 disabled:opacity-40"
+                  className="rounded-lg border border-danger/40 px-3 py-1.5 text-xs font-medium text-danger transition active:scale-95 hover:bg-danger/10 disabled:opacity-40"
                 >
                   Cancel
                 </button>
@@ -192,22 +191,22 @@ export default function AdminPage() {
             </div>
 
             {reschedule?.id === b.id && (
-              <div className="mt-3 rounded-xl bg-neutral-50 p-3">
-                <p className="mb-2 text-xs font-medium text-neutral-600">Pick a new time for {b.service}:</p>
+              <div className="mt-3 rounded-xl bg-muted p-3">
+                <p className="mb-2 text-xs font-medium text-muted-foreground">Pick a new time for {b.service}:</p>
                 {reschedule.slots.length === 0 ? (
-                  <p className="text-xs text-neutral-400">Loading open times…</p>
+                  <p className="text-xs text-muted-foreground">Loading open times…</p>
                 ) : (
                   <div className="flex flex-wrap gap-1.5">
                     {reschedule.slots.map((s) => (
                       <button
                         key={s.iso}
                         onClick={() => void doReschedule(b.id, s.iso)}
-                        className="rounded-lg border border-black/10 bg-white px-2.5 py-1.5 text-xs transition active:scale-95 hover:border-[#2F6F6A]"
+                        className="rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs text-card-foreground transition active:scale-95 hover:border-primary"
                       >
                         {s.label}
                       </button>
                     ))}
-                    <button onClick={() => setReschedule(null)} className="px-2 py-1.5 text-xs text-neutral-400 hover:text-neutral-600">
+                    <button onClick={() => setReschedule(null)} className="px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground">
                       cancel
                     </button>
                   </div>
