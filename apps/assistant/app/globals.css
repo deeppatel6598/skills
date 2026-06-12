@@ -1,26 +1,73 @@
 @import "tailwindcss";
 
+/* Class-based dark mode (Tailwind v4): toggled by `.dark` on <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --background: #f6faf9;
+  --foreground: #13201e;
+  --card: #ffffff;
+  --card-foreground: #13201e;
+  --muted: #eef3f2;
+  --muted-foreground: #576663;
+  --border: rgba(0, 0, 0, 0.08);
+  --input: rgba(0, 0, 0, 0.12);
+  --primary: #2f6f6a;
+  --primary-foreground: #ffffff;
+  --accent: #e8b04b;
+  --danger: #d4503f;
+  --ring: #2f6f6a;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #0c1413;
+  --foreground: #e8efed;
+  --card: #121d1b;
+  --card-foreground: #e8efed;
+  --muted: #16211f;
+  --muted-foreground: #9bb0ac;
+  --border: rgba(255, 255, 255, 0.10);
+  --input: rgba(255, 255, 255, 0.16);
+  --primary: #4a9c95;
+  --primary-foreground: #04201d;
+  --accent: #e8b04b;
+  --danger: #f08a7d;
+  --ring: #5bb5ad;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-danger: var(--danger);
+  --color-ring: var(--ring);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Visible, high-contrast focus for keyboard users (WCAG 2.4.11). */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
