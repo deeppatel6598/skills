@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { rateLimit } from "@/lib/rate-limit";
+import { loadContext } from "@/lib/context";
+import { contactNotificationTemplate, sendEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,7 +33,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // MVP: log it (no PII beyond what they submitted). Wire Resend/DB in the email phase.
-  console.log("[contact]", { name: parsed.data.name, email: parsed.data.email, len: parsed.data.message.length });
+  // Notify the clinic inbox (best-effort; falls back to the console outbox).
+  try {
+    const { business } = await loadContext();
+    const to = process.env.CLINIC_EMAIL || "team@example.com";
+    await sendEmail({ to, ...contactNotificationTemplate(business, parsed.data) });
+  } catch (err) {
+    console.error("contact notification failed", err);
+  }
   return NextResponse.json({ data: { ok: true } }, { status: 201 });
 }

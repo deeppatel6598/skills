@@ -8,6 +8,7 @@ import {
 } from "@/lib/domain/booking";
 import { formatDateTime, formatSlotLabel } from "@/lib/domain/time";
 import { loadClientContext } from "@/lib/domain/client-context";
+import { notifyBookingConfirmed } from "@/lib/email";
 
 /**
  * Tool layer for the concierge. Follows the agent-harness-construction skill:
@@ -232,6 +233,14 @@ export async function dispatchTool(
           serviceName: String(input.service_name),
           startISO: String(input.start_iso),
           reason: input.reason ? String(input.reason) : undefined,
+        });
+        await notifyBookingConfirmed(business, input.email ? String(input.email) : null, {
+          clientName: String(input.client_name),
+          service: result.service.name,
+          when: formatDateTime(result.appointment.startsAt),
+          withName: result.resource.name,
+          price: money(result.service.priceCents),
+          petName: input.pet_name ? String(input.pet_name) : null,
         });
         return {
           status: "success",

@@ -6,6 +6,7 @@ import { formatDateTime } from "@/lib/domain/time";
 import { ConflictError, NotFoundError } from "@/lib/types";
 import { CLIENT_COOKIE, CLIENT_COOKIE_MAX_AGE, signClientId } from "@/lib/client-session";
 import { rateLimit } from "@/lib/rate-limit";
+import { notifyBookingConfirmed } from "@/lib/email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,25 +54,40 @@ export async function POST(req: NextRequest) {
       startISO: b.startISO,
       reason: b.reason,
     });
+    const when = formatDateTime(result.appointment.startsAt);
+    const price = result.service.priceCents != null ? `$${(result.service.priceCents / 100).toFixed(0)}` : null;
     const res = NextResponse.json(
       {
         data: {
           id: result.appointment.id,
           service: result.service.name,
-          when: formatDateTime(result.appointment.startsAt),
+          when,
           with: result.resource.name,
-          price: result.service.priceCents != null ? `$${(result.service.priceCents / 100).toFixed(0)}` : null,
+          price,
         },
       },
       { status: 201, headers: { Location: `/api/bookings/${result.appointment.id}` } },
     );
     // Remember this client so we can greet them by name next time (signed, httpOnly).
-    res.cookies.set(CLIENT_COOKIE, signClientId(result.client.id), {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: CLIENT_COOKIE_MAX_AGE,
+    // Skipped gracefully if no signing secret is configured.
+    const signed = signClientId(result.client.id);
+    if (signed) {
+      res.cookies.set(CLIENT_COOKIE, signed, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/",
+        maxAge: CLIENT_COOKIE_MAX_AGE,
+      });
+    }
+    // Confirmation email (best-effort; doesn't block the booking).
+    await notifyBookingConfirmed(business, b.email, {
+      clientName: b.clientName,
+      service: result.service.name,
+      when,
+      withName: result.resource.name,
+      price,
+      petName: b.petName ?? null,
     });
     return res;
   } catch (err) {

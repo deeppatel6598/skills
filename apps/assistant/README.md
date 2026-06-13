@@ -86,12 +86,12 @@ Patterns came from the skills in this monorepo (`ecc/`, `superpowers/`):
 
 ## Roadmap (fast-follows)
 
-ElevenLabs streaming voice · Google Calendar sync · Resend confirmation/reminder
-emails. See the plan for the full phased roadmap.
+Google Calendar sync. See the plan for the full phased roadmap.
 
 **Done:** booking domain · AI concierge (Claude + keyless fallback) · chat+voice
-widget · staff admin dashboard · returning-client memory · **multilingual** —
-auto-detects the client's language and replies in it (Claude does full content
-translation; the keyless fallback localizes its phrasing for en/es/fr/de/pt/hi),
-with voice STT/TTS following the language and the no-medical-advice safety line
-localized too.
+widget · ElevenLabs production voice (Web Speech fallback) · staff admin
+dashboard · returning-client memory · multilingual (en/es/fr/de/pt/hi, voice
+follows the language, safety line localized) · light/dark theming + About/Contact
+pages · security hardening (CSP, headers, rate limiting, fail-closed secrets) ·
+**email** — confirmation on booking, contact-form notifications, and a
+reminder cron endpoint, via Resend with a keyless console-outbox fallback.

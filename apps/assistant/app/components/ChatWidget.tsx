@@ -157,7 +157,7 @@ export default function ChatWidget() {
   }, [listening, send]);
 
   const submitBooking = useCallback(
-    async (form: { clientName: string; phone: string; petName?: string; serviceName: string; startISO: string }) => {
+    async (form: { clientName: string; phone: string; email?: string; petName?: string; serviceName: string; startISO: string }) => {
       const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -395,10 +395,11 @@ function BookingForm({
   defaultName: string;
   defaultPhone: string;
   onCancel: () => void;
-  onSubmit: (form: { clientName: string; phone: string; petName?: string; serviceName: string; startISO: string }) => Promise<void>;
+  onSubmit: (form: { clientName: string; phone: string; email?: string; petName?: string; serviceName: string; startISO: string }) => Promise<void>;
 }) {
   const [clientName, setClientName] = useState(defaultName);
   const [phone, setPhone] = useState(defaultPhone);
+  const [email, setEmail] = useState("");
   const [petName, setPetName] = useState("");
   const [busy, setBusy] = useState(false);
   const valid = clientName.trim().length > 1 && phone.replace(/\D/g, "").length >= 7;
@@ -411,6 +412,7 @@ function BookingForm({
         <div className="space-y-2">
           <input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Your name" aria-label="Your name" className="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-[var(--brand)]" />
           <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone number" inputMode="tel" aria-label="Phone number" className="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-[var(--brand)]" />
+          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email (optional — for confirmation)" type="email" inputMode="email" aria-label="Email" className="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-[var(--brand)]" />
           <input value={petName} onChange={(e) => setPetName(e.target.value)} placeholder="Pet's name (optional)" aria-label="Pet's name" className="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-[var(--brand)]" />
         </div>
         <div className="mt-3 flex gap-2">
@@ -421,7 +423,7 @@ function BookingForm({
             disabled={!valid || busy}
             onClick={async () => {
               setBusy(true);
-              await onSubmit({ clientName, phone, petName: petName || undefined, serviceName: service, startISO });
+              await onSubmit({ clientName, phone, email: email || undefined, petName: petName || undefined, serviceName: service, startISO });
               setBusy(false);
             }}
             className="h-10 flex-1 rounded-xl text-sm font-medium text-white transition active:scale-95 disabled:opacity-40"

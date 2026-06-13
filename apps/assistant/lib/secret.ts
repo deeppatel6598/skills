@@ -7,11 +7,20 @@
 const DEV_FALLBACK = "dev-insecure-secret-change-me";
 
 export function getServerSecret(): string {
+  const s = getOptionalSecret();
+  if (s) return s;
+  throw new Error("ADMIN_SECRET must be set to a strong value in production.");
+}
+
+/**
+ * Like getServerSecret but returns null instead of throwing when unset in
+ * production. Used for non-security-critical signing (the returning-client
+ * cookie) that should degrade gracefully rather than break public flows.
+ */
+export function getOptionalSecret(): string | null {
   const s = process.env.ADMIN_SECRET;
   if (s && s.length >= 16) return s;
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("ADMIN_SECRET must be set to a strong value in production.");
-  }
+  if (process.env.NODE_ENV === "production") return null;
   return s || DEV_FALLBACK; // dev/test only
 }
 
